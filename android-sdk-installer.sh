@@ -29,16 +29,16 @@
 # SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
 
-#project metadata
+# project metadata
 ASI="Android SDK Installer"
-ASI_VERSION="0.1.5"
+ASI_VERSION="0.0.0"
 
 
-#script variables
+# script variables
 ASI_REQUIREMENTS=("wget" "unzip" "lib32stdc++6" "lib32ncurses5" "openjdk-7-jdk" "curl" "tar")
 ASI_ASSUME_YES=false
 ASI_INSTALL_DIR="."
-#Colors for Bash
+# Colors for Bash
 ASI_COLOR_BLUE="\033[0;34m"
 ASI_COLOR_GREEN="\033[0;32m"
 ASI_COLOR_RED="\033[0;31m"
@@ -46,10 +46,10 @@ ASI_COLOR_RESET="\e[0m"
 ASI_COLOR_WHITE="\033[1;37m"
 
 
-#logs to console
+# logs to console
 #
-#${1}  message to write to console
-#${2} what color to use. 0 - info(blue), 1- success(green), 2 - error(red)
+# ${1}  message to write to console
+# ${2} what color to use. 0 - info(blue), 1- success(green), 2 - error(red)
 asi_log() {
   if [ ${ASI_NO_COLOR} == true ] ; then
     echo "android-sdk-installer: ${1}"
@@ -62,40 +62,40 @@ asi_log() {
 }
 
 
-#Check if user is root
-#return: 0 - is root, 1- NOT root
+# Check if user is root
+# return: 0 - is root, 1- NOT root
 asi_is_root() {
   [[ $EUID -eq 0 ]]
 }
 
 
-#setup machine for installation
+# setup machine for installation
 asi_setup_machine() {
-  #Prevents most errors that come from interrupted installation of packages.
-  #See a real case of this error: http://askubuntu.com/questions/402326/how-to-manually-run-sudo-dpkg-configure-a
+  # Prevents most errors that come from interrupted installation of packages.
+  # See a real case of this error: http://askubuntu.com/questions/402326/how-to-manually-run-sudo-dpkg-configure-a
   asi_log "configuring dpkg" 0
   dpkg --configure -a
 }
 
 
-#mark the next phase
-#${1} -- message marking phase
+# mark the next phase
+# ${1} -- message marking phase
 asi_next_phase() {
   local DIV="\n----------------------------------------------------------------------------\n"
   echo -e "${DIV}${1}${DIV}"
 }
 
 
-#checks if a package is installed
-#${1} -- package name
-#return 0 if installed. 1 if NOT installed.
+# checks if a package is installed
+# ${1} -- package name
+# return 0 if installed. 1 if NOT installed.
 asi_is_installed() {
   dpkg -s ${1} >/dev/null 2>&1
 }
 
 
-#checks all requirements have been installed
-#${1} -- requirements array
+# checks all requirements have been installed
+# ${1} -- requirements array
 asi_check_requirements() {
   asi_log "checking requirements" 0
   declare -a reqs=${!1}
@@ -113,17 +113,17 @@ asi_check_requirements() {
 }
 
 
-#install requirements
+# install requirements
 asi_install_requirements() {
   asi_log "installing requirements" 0
   apt-get install --yes ${ASI_REQUIREMENTS}
 }
 
 
-#prompt user
-#${1} -- message about the subject
-#${2} -- question to user
-#return: 0 - Yes, 1 - No, 2 - Skip
+# prompt user
+# ${1} -- message about the subject
+# ${2} -- question to user
+# return: 0 - Yes, 1 - No, 2 - Skip
 asi_prompt_user() {
   local answer
   if [ ${ASI_ASSUME_YES} ] ; then
@@ -147,9 +147,9 @@ asi_prompt_user() {
 }
 
 
-#download the Android SDK
-#adapted from: https://github.com/meteor/meteor/blob/ccfee68145720cd7761680215125f3f005d9ed30/scripts/generate-android-bundle.sh
-#${1} -- installation directory (where to install the SDK to)
+# download the Android SDK
+# adapted from: https://github.com/meteor/meteor/blob/ccfee68145720cd7761680215125f3f005d9ed30/scripts/generate-android-bundle.sh
+# ${1} -- installation directory (where to install the SDK to)
 asi_download_sdk() {
   local temp_dir="/tmp/ASI_sdk_temp"
   local root_url=http://dl.google.com/android/
@@ -166,8 +166,8 @@ asi_download_sdk() {
 }
 
 
-#setups the Android SDK
-#${1} -- android sdk directory
+# setups the Android SDK
+# ${1} -- android sdk directory
 asi_setup_sdk() {
   asi_log "setting up sdk" 0
   export ANDROID_HOME=${1}
@@ -176,7 +176,7 @@ asi_setup_sdk() {
 }
 
 
-#handles the whole android installation of SDK
+# handles the whole android installation of SDK
 asi_install_sdk() {
   local sdk_dir=$(readlink -f ${ASI_INSTALL_DIR})
   asi_download_sdk ${sdk_dir}
@@ -184,8 +184,8 @@ asi_install_sdk() {
 }
 
 
-#process options passed to script
-#adapted from: http://stackoverflow.com/questions/192249/how-do-i-parse-command-line-arguments-in-bash
+# process options passed to script
+# adapted from: http://stackoverflow.com/questions/192249/how-do-i-parse-command-line-arguments-in-bash
 asi_process_script_options() {
   for i in "$@"
   do
@@ -202,24 +202,24 @@ asi_process_script_options() {
       ASI_NO_COLOR=true
       ;;
     *)
-      #unknown option: just ignore
+      # unknown option: just ignore
       ;;
   esac
   done
 }
 
 
-#START
+# START
 asi_process_script_options
 
-#setting up machine
+# setting up machine
 asi_next_phase "Machine Setup"
 asi_setup_machine
 
-#checking requirements
+# checking requirements
 asi_next_phase "Requirements Check"
 if asi_check_requirements ASI_REQUIREMENTS[@] ; then
-  asi_log "All requirements satisfied." 1
+  asi_log "all requirements satisfied." 1
 else
   response=$(asi_prompt_user "Not all requirements satisfied" "Install them?")
   if [ ${response} -eq 0 ] ; then
@@ -230,6 +230,6 @@ else
   fi
 fi
 
-#downloading sdk
+# downloading sdk
 asi_next_phase "Android SDK Installation"
 #asi_install_sdk
