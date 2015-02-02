@@ -44,6 +44,7 @@ ASI_COLOR_GREEN="\033[0;32m"
 ASI_COLOR_RED="\033[0;31m"
 ASI_COLOR_RESET="\e[0m"
 ASI_COLOR_WHITE="\033[1;37m"
+ASI_NO_COLOR=false
 
 
 # logs to console
@@ -184,10 +185,32 @@ asi_install_sdk() {
 }
 
 
+# show help information
+asi_show_help() {
+  echo "${ASI} v${ASI_VERSION}"
+  echo
+  echo "Usage: ./android-sdk-installer.sh [options]"
+  echo
+  echo "options:"
+  echo "    -d=<dir>,  --dir=<dir>          installation directory"
+  echo "    -h,  --help                     show this help information"
+  echo "    -nc, --no-color                 disable color output"
+  echo "    -v,  --version                  show version information"
+  echo "    -y,  --yes                      assume yes to all prompts"
+}
+
+
+# show version information
+asi_show_version() {
+  asi_log "${ASI} v${ASI_VERSION} by GochoMugo <mugo@forfuture.co.ke>" 0
+  asi_log "Repo at https://github.com/GochoMugo/android-sdk-installer" 0
+}
+
+
 # process options passed to script
 # adapted from: http://stackoverflow.com/questions/192249/how-do-i-parse-command-line-arguments-in-bash
 asi_process_script_options() {
-  for i in "$@"
+  for i in "${1}"
   do
   case $i in
     -y|--yes )
@@ -201,6 +224,14 @@ asi_process_script_options() {
     -nc|--no-color )
       ASI_NO_COLOR=true
       ;;
+    -h|--help )
+      asi_show_help
+      exit
+      ;;
+    -v|--version )
+      asi_show_version
+      exit
+      ;;
     *)
       # unknown option: just ignore
       ;;
@@ -210,7 +241,7 @@ asi_process_script_options() {
 
 
 # START
-asi_process_script_options
+asi_process_script_options ${@}
 
 # setting up machine
 asi_next_phase "Machine Setup"
@@ -219,7 +250,7 @@ asi_setup_machine
 # checking requirements
 asi_next_phase "Requirements Check"
 if asi_check_requirements ASI_REQUIREMENTS[@] ; then
-  asi_log "all requirements satisfied." 1
+  asi_log "all requirements satisfied" 1
 else
   response=$(asi_prompt_user "Not all requirements satisfied" "Install them?")
   if [ ${response} -eq 0 ] ; then
