@@ -150,20 +150,21 @@ asi_prompt_user() {
 
 # download the Android SDK
 # adapted from: https://github.com/meteor/meteor/blob/ccfee68145720cd7761680215125f3f005d9ed30/scripts/generate-android-bundle.sh
-# ${1} -- installation directory (where to install the SDK to)
+# ${1} -- installation directory (where to install the SDK to, absolute path)
 asi_download_sdk() {
   local temp_dir="/tmp/ASI_sdk_temp"
   local root_url=http://dl.google.com/android/
   local package=android-sdk_r24.0.2-linux.tgz
-  local installation_dir=$(readlink -f ${1})
+  local installation_dir=${1}
   asi_log "downloading sdk from: ${root_url}${package}" 0
   mkdir ${temp_dir}
   cd ${temp_dir}
   curl -O ${root_url}${package}
   tar xzf ${package} > /dev/null
   rm ${package}
-  asi_log "installing sdk into: ${1}" 0
-  mv android-sdk-linux ${installation_dir}
+  asi_log "installing sdk into: ${installation_dir}" 0
+  mkdir -p ${installation_dir}
+  mv android-sdk-linux/* ${installation_dir}
   cd -
 }
 
