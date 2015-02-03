@@ -162,18 +162,21 @@ asi_download_sdk() {
   curl -O ${root_url}${package}
   tar xzf ${package} > /dev/null
   rm ${package}
+  asi_log "installing sdk into: ${1}" 0
   mv android-sdk-linux ${installation_dir}
   cd -
 }
 
 
-# setups the Android SDK
+# prepares the Android SDK
 # ${1} -- android sdk directory
-asi_setup_sdk() {
-  asi_log "setting up sdk" 0
-  export ANDROID_HOME=${1}
-  export PATH=${ANDROID_HOME}/tools:${PATH}
-  export PATH=${ANDROID_HOME}/platform-tools:${PATH}
+asi_prepare_sdk() {
+  asi_log "creating file with environment variables" 0
+  cat > env.sh << EOF
+export ANDROID_HOME=${1}
+export PATH=${ANDROID_HOME}/tools:${PATH}
+export PATH=${ANDROID_HOME}/platform-tools:${PATH}
+EOF
 }
 
 
@@ -181,7 +184,7 @@ asi_setup_sdk() {
 asi_install_sdk() {
   local sdk_dir=$(readlink -f ${ASI_INSTALL_DIR})
   asi_download_sdk ${sdk_dir}
-  asi_setup_sdk ${sdk_dir}
+  asi_prepare_sdk ${sdk_dir}
 }
 
 
@@ -263,4 +266,4 @@ fi
 
 # downloading sdk
 asi_next_phase "Android SDK Installation"
-#asi_install_sdk
+asi_install_sdk
