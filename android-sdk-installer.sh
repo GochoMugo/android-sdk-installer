@@ -35,7 +35,7 @@ ASI_VERSION="0.0.0"
 
 
 # script variables
-ASI_REQUIREMENTS=("wget" "unzip" "lib32stdc++6" "lib32ncurses5" "openjdk-7-jdk" "curl" "tar")
+ASI_REQUIREMENTS=("wget" "unzip" "lib32stdc++6" "lib32ncurses5" "openjdk-7-jdk" "curl" "tar" "expect")
 ASI_ASSUME_YES=false
 ASI_INSTALL_DIR="."
 # Colors for Bash
@@ -169,15 +169,19 @@ asi_download_sdk() {
 }
 
 
-# prepares the Android SDK
-# ${1} -- android sdk directory
-asi_prepare_sdk() {
+# sets up the Android SDK
+# ${1} -- android sdk directory (absolute path)
+asi_setup_sdk() {
   asi_log "creating file with environment variables" 0
   cat > env.sh << EOF
 export ANDROID_HOME=${1}
 export PATH=${ANDROID_HOME}/tools:${PATH}
 export PATH=${ANDROID_HOME}/platform-tools:${PATH}
 EOF
+  asi_log "downloading script to accept licenses" 0
+  wget https://raw.githubusercontent.com/embarkmobile/android-sdk-installer/master/accept-licenses
+  chmod u+x accept-licenses
+  ./accept-licenses "android update sdk --no-ui --all --filter build-tools" "android-sdk-license-bcbbd656|intel-android-sysimage-license-1ea702d1"
 }
 
 
@@ -185,7 +189,7 @@ EOF
 asi_install_sdk() {
   local sdk_dir=$(readlink -f ${ASI_INSTALL_DIR})
   asi_download_sdk ${sdk_dir}
-  asi_prepare_sdk ${sdk_dir}
+  asi_setup_sdk ${sdk_dir}
 }
 
 
@@ -258,7 +262,6 @@ if asi_check_requirements ASI_REQUIREMENTS[@] ; then
 else
   response=$(asi_prompt_user "Not all requirements satisfied" "Install them?")
   if [ ${response} -eq 0 ] ; then
-    asi_log "installing requirements" 0
     asi_install_requirements
   else
     asi_log "ignoring requirements. moving on!" 2
