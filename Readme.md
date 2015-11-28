@@ -1,7 +1,7 @@
 
 # android-sdk-installer
 
-> Simple script to install the standalone Android SDK tools
+> An easy way to install the standalone Android SDK tools
 
 
 ## features:
@@ -18,6 +18,8 @@ Ensure [msu](https://github.com/GochoMugo/msu) is installed:
 ```bash
 $ msu install gh:GochoMugo/android-sdk-installer
 ```
+
+You will have to restart your terminal for the `android-sdk-installer` command to be available.
 
 
 ## usage:
