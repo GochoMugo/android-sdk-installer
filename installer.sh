@@ -104,7 +104,7 @@ asi_download_sdk() {
   local installation_dir=${1}
 
   log "downloading sdk from: ${root_url}${package}"
-  mkdir ${temp_dir}
+  mkdir -p ${temp_dir}
   cd ${temp_dir}
   wget ${root_url}${package}
   tar xzf ${package} > /dev/null
@@ -138,6 +138,15 @@ asi_install_sdk() {
   local sdk_dir=$(readlink -f ${ASI_INSTALL_DIR})
   asi_download_sdk ${sdk_dir}
   asi_setup_sdk ${sdk_dir}
+
+  echo
+  echo "now that the SDK is installed, add the lines between '#begin'"
+  echo "and '#end' to ~/.bashrc (or equivalent):"
+  echo
+  echo "#begin"
+  cat env.sh
+  echo "#end"
+  echo
 }
 
 
