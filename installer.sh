@@ -101,17 +101,17 @@ asi_download_sdk() {
   local temp_dir="/tmp/ASI_sdk_temp"
   local root_url=http://dl.google.com/android/
   local package=${ASI_PKG_NAME}
-  local installation_dir=${1}
+  local installation_dir="${1}"
 
   log "downloading sdk from: ${root_url}${package}"
-  mkdir -p ${temp_dir}
-  cd ${temp_dir}
+  mkdir -p "${temp_dir}"
+  cd "${temp_dir}"
   wget ${root_url}${package}
   tar xzf ${package} > /dev/null
 
   log "installing sdk into: ${installation_dir}"
-  mkdir -p ${installation_dir}
-  mv android-sdk-linux/* ${installation_dir}
+  mkdir -p "${installation_dir}"
+  mv android-sdk-linux/* "${installation_dir}"
   cd -
 }
 
@@ -121,14 +121,16 @@ asi_download_sdk() {
 asi_setup_sdk() {
   log "creating file with environment variables"
   cat > env.sh << EOF
-export ANDROID_HOME=${1}
-export PATH=${ANDROID_HOME}/tools:${PATH}
-export PATH=${ANDROID_HOME}/platform-tools:${PATH}
+export ANDROID_HOME='${1}'
+export PATH=\${ANDROID_HOME}/tools:\${PATH}
+export PATH=\${ANDROID_HOME}/platform-tools:\${PATH}
 EOF
 
   log "downloading script to accept licenses"
   wget https://raw.githubusercontent.com/embarkmobile/android-sdk-installer/master/accept-licenses
   chmod u+x accept-licenses
+  # we have to ensure `android` is in $PATH
+  export PATH=${1}/tools:${PATH}
   ./accept-licenses "android update sdk --no-ui --all --filter build-tools" "android-sdk-license-bcbbd656|intel-android-sysimage-license-1ea702d1"
 }
 
@@ -136,8 +138,8 @@ EOF
 # handles the whole android installation of SDK
 asi_install_sdk() {
   local sdk_dir=$(readlink -f ${ASI_INSTALL_DIR})
-  asi_download_sdk ${sdk_dir}
-  asi_setup_sdk ${sdk_dir}
+  asi_download_sdk "${sdk_dir}"
+  asi_setup_sdk "${sdk_dir}"
 
   echo
   echo "now that the SDK is installed, add the lines between '#begin'"
