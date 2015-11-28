@@ -1,4 +1,4 @@
-#!/bin/bash -e
+#!/usr/bin/env bash
 #
 # Android SDK Installer
 #
@@ -29,54 +29,21 @@
 # SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
 
-# project metadata
-ASI="Android SDK Installer"
-ASI_VERSION="0.0.0"
+# modules
+msu_require "console"
+msu_require "core_utils"
+msu_require "format"
 
 
 # script variables
-ASI_REQUIREMENTS=("wget" "unzip" "lib32stdc++6" "lib32ncurses5" "openjdk-7-jdk" "curl" "tar" "expect")
-ASI_ASSUME_YES=false
-ASI_INSTALL_DIR="."
-# Colors for Bash
-ASI_COLOR_BLUE="\033[0;34m"
-ASI_COLOR_GREEN="\033[0;32m"
-ASI_COLOR_RED="\033[0;31m"
-ASI_COLOR_RESET="\e[0m"
-ASI_COLOR_WHITE="\033[1;37m"
-ASI_NO_COLOR=false
-
-
-# logs to console
-#
-# ${1}  message to write to console
-# ${2} what color to use. 0 - info(blue), 1- success(green), 2 - error(red)
-asi_log() {
-  if [ ${ASI_NO_COLOR} == true ] ; then
-    echo "android-sdk-installer: ${1}"
-  else
-    [ ${2} -eq 0 ] && local color=${ASI_COLOR_BLUE}
-    [ ${2} -eq 1 ] && local color=${ASI_COLOR_GREEN}
-    [ ${2} -eq 2 ] && local color=${ASI_COLOR_RED}
-    echo -e "${ASI_COLOR_WHITE}android-sdk-installer: ${color}${1}${ASI_COLOR_RESET}"
-  fi
-}
-
-
-# Check if user is root
-# return: 0 - is root, 1- NOT root
-asi_is_root() {
-  [[ $EUID -eq 0 ]]
-}
-
-
-# setup machine for installation
-asi_setup_machine() {
-  # Prevents most errors that come from interrupted installation of packages.
-  # See a real case of this error: http://askubuntu.com/questions/402326/how-to-manually-run-sudo-dpkg-configure-a
-  asi_log "configuring dpkg" 0
-  dpkg --configure -a
-}
+ASI="Android SDK Installer"
+ASI_VERSION="1.0.0"
+ASI_REQUIREMENTS=("wget" "unzip" "lib32stdc++6" "lib32ncurses5" "openjdk-7-jdk" "tar" "expect")
+ASI_ASSUME_YES=${ASI_ASSUME_YES:-false}
+ASI_INSTALL_DIR=${ASI_INSTALL_DIR:-"."}
+ASI_NO_COLOR=${ASI_NO_COLOR:-false}
+ASI_PKG_NAME=${ASI_PKG_NAME:-android-sdk_r24.4.1-linux.tgz}
+LOG_TITLE="android-sdk-installer"
 
 
 # mark the next phase
@@ -87,64 +54,43 @@ asi_next_phase() {
 }
 
 
+# setup machine for installation
+asi_setup_machine() {
+  # Prevents most errors that come from interrupted installation of packages.
+  # See a real case of this error: http://askubuntu.com/questions/402326/how-to-manually-run-sudo-dpkg-configure-a
+  log "configuring dpkg"
+  dpkg --configure -a
+}
+
+
 # checks if a package is installed
-# ${1} -- package name
+# ${1} - package name
 # return 0 if installed. 1 if NOT installed.
 asi_is_installed() {
   dpkg -s ${1} >/dev/null 2>&1
 }
 
 
-# checks all requirements have been installed
-# ${1} -- requirements array
-asi_check_requirements() {
-  asi_log "checking requirements" 0
+# override yes-no questions with ${ASI_ASSUME_YES}
+asi_ask_yes_no() {
+  [ ${ASI_ASSUME_YES} == true ] && return
+  yes_no "${1}"
+}
+
+
+# handle checking and installing requirements
+# ${1} - requirements array
+asi_handle_requirements() {
+  log "checking and installing requirements"
   declare -a reqs=${!1}
-  return_code=0
   for req in ${reqs[@]}
   do
-    local answer="yes"
     if ! asi_is_installed ${req} ; then
-      answer="no"
-      return_code=1
+      asi_ask_yes_no "install ${req}" && {
+        apt-get install --yes ${req}
+      }
     fi
-    echo "    \"${req}\" installed: ${answer}"
   done
-  return ${return_code}
-}
-
-
-# install requirements
-asi_install_requirements() {
-  asi_log "installing requirements" 0
-  apt-get install --yes ${ASI_REQUIREMENTS}
-}
-
-
-# prompt user
-# ${1} -- message about the subject
-# ${2} -- question to user
-# return: 0 - Yes, 1 - No, 2 - Skip
-asi_prompt_user() {
-  local answer
-  if [ ${ASI_ASSUME_YES} ] ; then
-    echo 0
-  else
-    read -p "${1}
-    ${2}
-    [Y]es, [N]o, [S]kip: " answer
-    case ${answer} in
-      [Yy]* )
-        echo 0 ;;
-      [Nn]* )
-        echo 1 ;;
-      [Ss]* )
-        echo 2 ;;
-      * )
-        asi_log "invalid answer" 2
-        echo $(asi_prompt_user ${1} ${2}) ;;
-    esac
-  fi
 }
 
 
@@ -154,15 +100,16 @@ asi_prompt_user() {
 asi_download_sdk() {
   local temp_dir="/tmp/ASI_sdk_temp"
   local root_url=http://dl.google.com/android/
-  local package=android-sdk_r24.0.2-linux.tgz
+  local package=${ASI_PKG_NAME}
   local installation_dir=${1}
-  asi_log "downloading sdk from: ${root_url}${package}" 0
+
+  log "downloading sdk from: ${root_url}${package}"
   mkdir ${temp_dir}
   cd ${temp_dir}
-  curl -O ${root_url}${package}
+  wget ${root_url}${package}
   tar xzf ${package} > /dev/null
-  rm ${package}
-  asi_log "installing sdk into: ${installation_dir}" 0
+
+  log "installing sdk into: ${installation_dir}"
   mkdir -p ${installation_dir}
   mv android-sdk-linux/* ${installation_dir}
   cd -
@@ -172,13 +119,14 @@ asi_download_sdk() {
 # sets up the Android SDK
 # ${1} -- android sdk directory (absolute path)
 asi_setup_sdk() {
-  asi_log "creating file with environment variables" 0
+  log "creating file with environment variables"
   cat > env.sh << EOF
 export ANDROID_HOME=${1}
 export PATH=${ANDROID_HOME}/tools:${PATH}
 export PATH=${ANDROID_HOME}/platform-tools:${PATH}
 EOF
-  asi_log "downloading script to accept licenses" 0
+
+  log "downloading script to accept licenses"
   wget https://raw.githubusercontent.com/embarkmobile/android-sdk-installer/master/accept-licenses
   chmod u+x accept-licenses
   ./accept-licenses "android update sdk --no-ui --all --filter build-tools" "android-sdk-license-bcbbd656|intel-android-sysimage-license-1ea702d1"
@@ -195,23 +143,33 @@ asi_install_sdk() {
 
 # show help information
 asi_show_help() {
-  echo "${ASI} v${ASI_VERSION}"
   echo
-  echo "Usage: ./android-sdk-installer.sh [options]"
+  echo " ${ASI} v${ASI_VERSION}"
   echo
-  echo "options:"
+  echo " usage: android-sdk-installer [options]"
+  echo
+  echo " options:"
   echo "    -d=<dir>,  --dir=<dir>          installation directory"
-  echo "    -h,  --help                     show this help information"
-  echo "    -nc, --no-color                 disable color output"
-  echo "    -v,  --version                  show version information"
   echo "    -y,  --yes                      assume yes to all prompts"
+  # echo "    -nc, --no-color                 disable color output"
+  echo "    -h,  --help                     show this help information"
+  echo "    -v,  --version                  show version information"
+  echo
+  echo " environment variables:"
+  echo "    \${ASI_INSTALL_DIR}             installation directory [default: ${ASI_INSTALL_DIR}]"
+  echo "    \${ASI_ASSUME_YES}              assume yes to prompts [default: ${ASI_ASSUME_YES}]"
+  # echo "    \${ASI_NO_COLOR}                disable color output [default: ${ASI_NO_COLOR}]"
+  echo "    \${ASI_PKG_NAME}                package name [default: ${ASI_PKG_NAME}]"
+  echo
+  echo " see https://github.com/GochoMugo/android-sdk-installer for source code,"
+  echo " feature requests and bug reports"
+  echo
 }
 
 
 # show version information
 asi_show_version() {
-  asi_log "${ASI} v${ASI_VERSION} by GochoMugo <mugo@forfuture.co.ke>" 0
-  asi_log "Repo at https://github.com/GochoMugo/android-sdk-installer" 0
+  echo "v${ASI_VERSION}"
 }
 
 
@@ -248,26 +206,19 @@ asi_process_script_options() {
 }
 
 
-# START
-asi_process_script_options ${@}
+# main entry point
+main() {
+  asi_process_script_options ${@}
 
-# setting up machine
-asi_next_phase "Machine Setup"
-asi_setup_machine
+  # setting up machine
+  asi_next_phase "Machine Setup"
+  asi_setup_machine
 
-# checking requirements
-asi_next_phase "Requirements Check"
-if asi_check_requirements ASI_REQUIREMENTS[@] ; then
-  asi_log "all requirements satisfied" 1
-else
-  response=$(asi_prompt_user "Not all requirements satisfied" "Install them?")
-  if [ ${response} -eq 0 ] ; then
-    asi_install_requirements
-  else
-    asi_log "ignoring requirements. moving on!" 2
-  fi
-fi
+  # checking requirements
+  asi_next_phase "Handling Requirements"
+  asi_handle_requirements ASI_REQUIREMENTS[@]
 
-# downloading sdk
-asi_next_phase "Android SDK Installation"
-asi_install_sdk
+  # downloading sdk
+  asi_next_phase "Android SDK Installation"
+  asi_install_sdk
+}

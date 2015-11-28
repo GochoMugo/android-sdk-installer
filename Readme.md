@@ -1,7 +1,7 @@
 
 # android-sdk-installer
 
-Simple script to install the Android SDK.
+> Simple script to install the standalone Android SDK tools
 
 
 ## features:
@@ -11,17 +11,42 @@ Simple script to install the Android SDK.
 * Handles dependencies
 
 
-## contribution:
+## installation:
 
-Tasks we yet to do have been placed in the **Todo.md** file. Any issue
- may be reported [here][issues].
+Ensure [msu](https://github.com/GochoMugo/msu) is installed:
+
+```bash
+$ msu install gh:GochoMugo/android-sdk-installer
+```
+
+
+## usage:
+
+Running the install:
+
+```bash
+$ android-sdk-installer
+
+$ android-sdk-installer-nonsudo     # does NOT use `sudo`
+```
+
+
+Showing **help information**:
+
+```bash
+$ android-sdk-installer --help
+```
+
+
+Showing **version information**:
+
+```bash
+$ android-sdk-installer --version
+```
 
 
 ## license:
 
 __The MIT License (MIT)__
 
-Copyright (c) 2015 Gocho Mugo <mugo@forfuture.co.ke>
-
-
-[issues]:https://github.com/GochoMugo/android-sdk-installer/issues
+Copyright &copy; 2015 Gocho Mugo <mugo@forfuture.co.ke>
